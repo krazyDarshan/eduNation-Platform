@@ -178,3 +178,117 @@ def quiz(course_id, quiz_id):
                          course=course,
                          quiz=quiz,
                          questions=questions)
+
+@bp.route('/<int:course_id>/quiz/<int:quiz_id>/submit', methods=['POST'])
+@login_required
+def submit_quiz(course_id, quiz_id):
+    """Handle quiz submission and scoring"""
+    course = Course.query.get_or_404(course_id)
+    quiz = Quiz.query.get_or_404(quiz_id)
+    
+    # Verify quiz belongs to course
+    if quiz.course_id != course_id:
+        flash('Quiz not found in this course', 'error')
+        return redirect(url_for('courses.detail', course_id=course_id))
+    
+    # Check enrollment
+    enrollment = Enrollment.query.filter_by(
+        user_id=current_user.id,
+        course_id=course_id
+    ).first()
+    
+    if not enrollment:
+        flash('You must be enrolled in this course to take quizzes', 'error')
+        return redirect(url_for('courses.detail', course_id=course_id))
+    
+    # Get questions and process answers
+    questions = quiz.questions.order_by('order').all()
+    total_questions = len(questions)
+    correct_answers = 0
+    
+    for question in questions:
+        submitted_answer_id = request.form.get(f'q{question.id}')
+        if submitted_answer_id:
+            # Find the correct answer
+            correct_answer = question.answers.filter_by(is_correct=True).first()
+            if correct_answer and str(correct_answer.id) == submitted_answer_id:
+                correct_answers += 1
+    
+    # Calculate score percentage
+    score_percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+    
+    # Award points based on performance
+    from config import Config
+    if score_percentage >= 80:
+        points_awarded = Config.POINTS_PER_QUIZ
+        current_user.total_points += points_awarded
+        flash(f'Excellent! You scored {score_percentage:.0f}% and earned {points_awarded} points!', 'success')
+    elif score_percentage >= 60:
+        points_awarded = Config.POINTS_PER_QUIZ // 2
+        current_user.total_points += points_awarded
+        flash(f'Good job! You scored {score_percentage:.0f}% and earned {points_awarded} points!', 'info')
+    else:
+        points_awarded = 0
+        flash(f'You scored {score_percentage:.0f}%. Try reviewing the material and take the quiz again!', 'warning')
+    
+    db.session.commit()
+    
+    return render_template('courses/quiz_results.html',
+                         course=course,
+                         quiz=quiz,
+                         score_percentage=score_percentage,
+                         correct_answers=correct_answers,
+                         total_questions=total_questions,
+                         points_awarded=points_awarded)
+
+@bp.route('/<int:course_id>/lessons/<int:lesson_id>/complete', methods=['POST'])
+@login_required
+def complete_lesson(course_id, lesson_id):
+    """Mark lesson as completed"""
+    course = Course.query.get_or_404(course_id)
+    lesson = Lesson.query.get_or_404(lesson_id)
+    
+    # Verify lesson belongs to course
+    if lesson.course_id != course_id:
+        flash('Lesson not found in this course', 'error')
+        return redirect(url_for('courses.detail', course_id=course_id))
+    
+    # Check enrollment
+    enrollment = Enrollment.query.filter_by(
+        user_id=current_user.id,
+        course_id=course_id
+    ).first()
+    
+    if not enrollment:
+        flash('You must be enrolled in this course to complete lessons', 'error')
+        return redirect(url_for('courses.detail', course_id=course_id))
+    
+    # Get or create progress record
+    progress = UserProgress.query.filter_by(
+        user_id=current_user.id,
+        lesson_id=lesson_id
+    ).first()
+    
+    if not progress:
+        progress = UserProgress(user_id=current_user.id, lesson_id=lesson_id)
+        db.session.add(progress)
+    
+    # Mark as completed
+    progress.completed = True
+    progress.completed_at = db.func.current_timestamp()
+    
+    # Award points for completion
+    if not progress.completed:
+        from config import Config
+        current_user.total_points += Config.POINTS_PER_LESSON
+        points_awarded = Config.POINTS_PER_LESSON
+    else:
+        points_awarded = 0
+    
+    db.session.commit()
+    
+    if points_awarded > 0:
+        flash('Lesson completed! You earned {} points.'.format(points_awarded), 'success')
+    else:
+        flash('Lesson already completed!', 'info')
+    return redirect(url_for('courses.lesson', course_id=course_id, lesson_id=lesson_id))

@@ -11,7 +11,10 @@ migrate = Migrate()
 bcrypt = Bcrypt()
 
 def create_app(config_class=Config):
-    app = Flask(__name__)
+    import os
+    template_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'templates')
+    static_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'static')
+    app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
     app.config.from_object(config_class)
     
     # Initialize extensions

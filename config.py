@@ -7,12 +7,16 @@ class Config:
     """Base configuration class with common settings"""
     
     # Secret key for session management
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'eco-learn-secret-key-change-in-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'edunation-secret-key-change-in-production'
     
     # Database configuration
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'ecolearn.db')
+        'sqlite:///' + os.path.join(basedir, 'edunation.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Fix PostgreSQL URL format for newer SQLAlchemy
+    if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('postgres://', 'postgresql://', 1)
     
     # Session configuration
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)

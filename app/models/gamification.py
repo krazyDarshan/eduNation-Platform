@@ -28,7 +28,3 @@ class LeaderboardView:
         from app.models.user import User
         return User.query.order_by(User.total_points.desc()).limit(limit).all()
 
-class UserProgress(db.Model):
-    # Defined in user.py; left here for type reference only
-    pass
-

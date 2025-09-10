@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz Results - {{ quiz.title }} - {{ course.title }} - eduNation{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('courses.index') }}">Courses</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('courses.detail', course_id=course.id) }}">{{ course.title }}</a></li>
+                    <li class="breadcrumb-item active">Quiz Results</li>
+                </ol>
+            </nav>
+            
+            <div class="card">
+                <div class="card-header text-center">
+                    <h2 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Quiz Results: {{ quiz.title }}
+                    </h2>
+                </div>
+                <div class="card-body text-center">
+                    <!-- Score Display -->
+                    <div class="score-circle mb-4">
+                        <div class="score-value">
+                            <span class="percentage">{{ "%.0f"|format(score_percentage) }}%</span>
+                            <small class="d-block">{{ correct_answers }}/{{ total_questions }} correct</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Performance Message -->
+                    <div class="alert {% if score_percentage >= 80 %}alert-success{% elif score_percentage >= 60 %}alert-info{% else %}alert-warning{% endif %} mb-4">
+                        {% if score_percentage >= 80 %}
+                        <i class="fas fa-trophy me-2"></i>
+                        <strong>Excellent work!</strong> You've mastered this material.
+                        {% elif score_percentage >= 60 %}
+                        <i class="fas fa-thumbs-up me-2"></i>
+                        <strong>Good job!</strong> You have a solid understanding.
+                        {% else %}
+                        <i class="fas fa-book me-2"></i>
+                        <strong>Keep studying!</strong> Review the lessons and try again.
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Points Awarded -->
+                    {% if points_awarded > 0 %}
+                    <div class="points-earned mb-4">
+                        <div class="badge bg-warning fs-4 p-3">
+                            <i class="fas fa-star me-2"></i>{{ points_awarded }} Points Earned!
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Performance Breakdown -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="stat-item">
+                                <i class="fas fa-question-circle fa-2x text-primary mb-2"></i>
+                                <h4>{{ total_questions }}</h4>
+                                <small class="text-muted">Total Questions</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-item">
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <h4>{{ correct_answers }}</h4>
+                                <small class="text-muted">Correct Answers</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-item">
+                                <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                                <h4>{{ points_awarded }}</h4>
+                                <small class="text-muted">Points Earned</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{{ url_for('courses.detail', course_id=course.id) }}" class="btn btn-primary btn-lg me-md-2">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Course
+                        </a>
+                        {% if score_percentage < 80 %}
+                        <a href="{{ url_for('courses.quiz', course_id=course.id, quiz_id=quiz.id) }}" class="btn btn-outline-success btn-lg">
+                            <i class="fas fa-redo me-2"></i>Retake Quiz
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-success btn-lg">
+                            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.score-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.score-value .percentage {
+    font-size: 2.5rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+}
+
+.points-earned {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+{% if score_percentage < 60 %}
+.score-circle {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+{% elif score_percentage < 80 %}
+.score-circle {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+}
+{% endif %}
+</style>
+{% endblock %}

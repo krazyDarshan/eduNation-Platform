@@ -174,8 +174,8 @@
                     Every lesson completed brings us one step closer to a sustainable future.
                 </p>
                 {% if not current_user.is_authenticated %}
-                <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg">
-                    <i class="fas fa-user-plus me-2"></i>Join EcoLearn Today
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>Join eduNation Today
                 </a>
                 {% else %}
                 <a href="{{ url_for('courses.index') }}" class="btn btn-light btn-lg">

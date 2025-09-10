@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.title }} - eduNation{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Course Header -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('courses.index') }}">Courses</a></li>
+                    <li class="breadcrumb-item active">{{ course.title }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex align-items-center mb-3">
+                <h1 class="display-5 text-success me-3">{{ course.title }}</h1>
+                <span class="badge difficulty-{{ course.difficulty }} fs-6">
+                    {{ course.difficulty.title() }}
+                </span>
+            </div>
+            
+            <p class="lead text-muted">{{ course.description }}</p>
+            
+            <div class="row text-center mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <i class="fas fa-book fa-2x text-success mb-2"></i>
+                            <h5>{{ lessons|length }}</h5>
+                            <small class="text-muted">Lessons</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <i class="fas fa-question-circle fa-2x text-info mb-2"></i>
+                            <h5>{{ quizzes|length }}</h5>
+                            <small class="text-muted">Quizzes</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                            <h5>{{ lessons|length * 10 }}min</h5>
+                            <small class="text-muted">Est. Time</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <i class="fas fa-calendar fa-2x text-primary mb-2"></i>
+                            <h5>{{ course.created_at.strftime('%Y') }}</h5>
+                            <small class="text-muted">Created</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            {% if course.cover_image %}
+            <img src="{{ course.cover_image }}" class="img-fluid rounded shadow" alt="{{ course.title }}">
+            {% else %}
+            <div class="bg-success rounded shadow d-flex align-items-center justify-content-center" style="height: 300px;">
+                <i class="fas fa-seedling fa-5x text-white"></i>
+            </div>
+            {% endif %}
+            
+            <div class="mt-3">
+                {% if current_user.is_authenticated %}
+                    {% if enrollment %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>You are enrolled in this course!
+                        {% if enrollment.is_completed %}
+                        <div class="mt-2">
+                            <span class="badge bg-success">Completed</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <form method="POST" action="{{ url_for('courses.enroll', course_id=course.id) }}">
+                        <button type="submit" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-plus me-2"></i>Enroll Now
+                        </button>
+                    </form>
+                    {% endif %}
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <a href="{{ url_for('auth.login') }}">Login</a> or 
+                    <a href="{{ url_for('auth.register') }}">register</a> to enroll in this course.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Course Content -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Lessons Section -->
+            {% if lessons %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-list me-2"></i>Course Curriculum</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for lesson in lessons %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                {% if enrollment and progress_data.get(lesson.id, {}).get('completed', False) %}
+                                <i class="fas fa-check-circle text-success me-3"></i>
+                                {% else %}
+                                <i class="fas fa-play-circle text-muted me-3"></i>
+                                {% endif %}
+                                
+                                <div>
+                                    <h6 class="mb-1">{{ lesson.title }}</h6>
+                                    <small class="text-muted">
+                                        {% if lesson.content %}
+                                        {{ (lesson.content|striptags)[:100] }}{% if (lesson.content|striptags)|length > 100 %}...{% endif %}
+                                        {% else %}
+                                        Click to start this lesson
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-secondary me-2">{{ lesson.order }}</span>
+                                {% if enrollment %}
+                                <a href="{{ url_for('courses.lesson', course_id=course.id, lesson_id=lesson.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    {% if progress_data.get(lesson.id, {}).get('completed', False) %}
+                                    <i class="fas fa-redo me-1"></i>Review
+                                    {% else %}
+                                    <i class="fas fa-play me-1"></i>Start
+                                    {% endif %}
+                                </a>
+                                {% else %}
+                                <span class="badge bg-warning">Enrollment Required</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Quizzes Section -->
+            {% if quizzes %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-question-circle me-2"></i>Quizzes</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for quiz in quizzes %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ quiz.title }}</h5>
+                                    <p class="card-text">{{ quiz.description }}</p>
+                                    {% if enrollment %}
+                                    <a href="{{ url_for('courses.quiz', course_id=course.id, quiz_id=quiz.id) }}" 
+                                       class="btn btn-info btn-sm">
+                                        <i class="fas fa-question me-1"></i>Take Quiz
+                                    </a>
+                                    {% else %}
+                                    <button class="btn btn-secondary btn-sm" disabled>
+                                        <i class="fas fa-lock me-1"></i>Enrollment Required
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Progress Card (for enrolled users) -->
+            {% if enrollment %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line me-2"></i>Your Progress</h5>
+                </div>
+                <div class="card-body">
+                    {% set completed_lessons = progress_data.values() | selectattr('completed') | list | length %}
+                    {% set total_lessons = lessons | length %}
+                    {% set progress_percentage = (completed_lessons / total_lessons * 100) if total_lessons > 0 else 0 %}
+                    
+                    <div class="progress mb-3" style="height: 10px;">
+                        <div class="progress-bar bg-success" style="width: {{ progress_percentage }}%"></div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <small>{{ completed_lessons }} of {{ total_lessons }} lessons completed</small>
+                        <small>{{ "%.0f"|format(progress_percentage) }}%</small>
+                    </div>
+                    
+                    {% if progress_percentage == 100 %}
+                    <div class="alert alert-success mt-3 mb-0">
+                        <i class="fas fa-trophy me-2"></i>Course Completed!
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Course Info -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle me-2"></i>Course Information</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <strong>Difficulty:</strong> 
+                            <span class="badge difficulty-{{ course.difficulty }}">{{ course.difficulty.title() }}</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong>Created:</strong> {{ course.created_at.strftime('%B %d, %Y') }}
+                        </li>
+                        <li class="mb-2">
+                            <strong>Last Updated:</strong> {{ course.created_at.strftime('%B %d, %Y') }}
+                        </li>
+                        <li class="mb-2">
+                            <strong>Lessons:</strong> {{ lessons|length }}
+                        </li>
+                        <li class="mb-0">
+                            <strong>Quizzes:</strong> {{ quizzes|length }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+.difficulty-beginner {
+    background-color: #28a745;
+    color: white;
+}
+
+.difficulty-intermediate {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.difficulty-advanced {
+    background-color: #dc3545;
+    color: white;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

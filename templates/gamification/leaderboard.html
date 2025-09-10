@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard - eduNation{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="display-5 text-success mb-4">
+                <i class="fas fa-trophy me-3"></i>Leaderboard
+            </h1>
+            
+            {% if current_user_rank %}
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-medal me-2"></i>
+                Your current rank: <strong>#{{ current_user_rank }}</strong>
+            </div>
+            {% endif %}
+            
+            <div class="card">
+                <div class="card-body">
+                    {% if top_users %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>User</th>
+                                    <th>Level</th>
+                                    <th>Total Points</th>
+                                    <th>Achievements</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in top_users %}
+                                <tr {% if user.is_current_user %}class="table-warning"{% endif %}>
+                                    <td>
+                                        <span class="badge badge-rank rank-{{ user.rank }}">
+                                            {% if user.rank == 1 %}
+                                            <i class="fas fa-crown me-1"></i>
+                                            {% elif user.rank == 2 %}
+                                            <i class="fas fa-medal me-1"></i>
+                                            {% elif user.rank == 3 %}
+                                            <i class="fas fa-award me-1"></i>
+                                            {% endif %}
+                                            #{{ user.rank }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar me-3">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div>
+                                                <strong>{{ user.first_name }} {{ user.last_name }}</strong>
+                                                {% if user.is_current_user %}
+                                                <span class="badge bg-primary ms-2">You</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">Level {{ user.level }}</span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ user.total_points }}</strong> points
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning">{{ user.achievements_count or 0 }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-trophy fa-4x text-muted mb-3"></i>
+                        <h3 class="text-muted">No users on leaderboard yet</h3>
+                        <p class="text-muted">Start learning to be the first on the leaderboard!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.badge-rank {
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.rank-1 {
+    background: linear-gradient(135deg, #ffd700, #ffed4a);
+    color: #000;
+}
+
+.rank-2 {
+    background: linear-gradient(135deg, #c0c0c0, #e6e6e6);
+    color: #000;
+}
+
+.rank-3 {
+    background: linear-gradient(135deg, #cd7f32, #daa520);
+    color: white;
+}
+</style>
+{% endblock %}

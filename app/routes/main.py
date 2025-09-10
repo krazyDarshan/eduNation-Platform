@@ -62,9 +62,8 @@ def profile():
         'level_progress': current_user.get_level_progress()
     }
     
-    recent_activities = current_user.user_progress.order_by(
-        current_user.user_progress.c.completed_at.desc()
-    ).limit(10).all() if current_user.user_progress else []
+    # Get recent activities - simplified for now
+    recent_activities = []
     
     return render_template('main/profile.html', 
                          user_stats=user_stats,

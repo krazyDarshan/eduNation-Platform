@@ -1,4 +1,4 @@
-# EcoLearn - Gamified Environmental Education Platform
+# eduNation - Gamified Environmental Education Platform
 
 A comprehensive web application built with Flask that provides gamified environmental education for students and colleges. The platform combines interactive learning with gamification elements to create an engaging educational experience.
 
@@ -48,8 +48,8 @@ A comprehensive web application built with Flask that provides gamified environm
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/EcoLearn-Platform.git
-   cd EcoLearn-Platform
+   git clone https://github.com/yourusername/eduNation-Platform.git
+   cd eduNation-Platform
    ```
 
 2. **Create a virtual environment**
@@ -69,7 +69,7 @@ A comprehensive web application built with Flask that provides gamified environm
    FLASK_APP=run.py
    FLASK_ENV=development
    SECRET_KEY=your-secret-key-here
-   DATABASE_URL=sqlite:///ecolearn.db
+   DATABASE_URL=sqlite:///edunation.db
    ```
 
 5. **Initialize the database**
@@ -90,7 +90,7 @@ A comprehensive web application built with Flask that provides gamified environm
 ## 🗂️ Project Structure
 
 ```
-EcoLearn-Platform/
+eduNation-Platform/
 ├── app/
 │   ├── models/             # Database models
 │   │   ├── user.py        # User, Enrollment, UserProgress models

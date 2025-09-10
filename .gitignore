@@ -20,7 +20,17 @@ htmlcov/
 # Databases
 *.sqlite3
 *.db
-/ecolearn.db
+ecolearn.db
+edunation.db
+
+# Environment files
+.env.local
+.env.production
+.env.staging
+
+# Logs
+*.log
+logs/
 
 # Migrations
 migrations/versions/__pycache__/

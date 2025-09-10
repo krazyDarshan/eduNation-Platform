@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}About - eduNation{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-5 text-success mb-4 text-center">
+                <i class="fas fa-leaf me-3"></i>About eduNation
+            </h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3>Our Mission</h3>
+                    <p class="lead">eduNation is a gamified environmental education platform designed to make learning about sustainability engaging and rewarding. We believe that education is the key to creating a more sustainable future for our planet.</p>
+                    
+                    <h3>What We Offer</h3>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Interactive environmental courses</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Gamified learning with points and achievements</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Community leaderboards</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Progress tracking and certificates</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Expert-curated content</li>
+                    </ul>
+                    
+                    <h3>Our Vision</h3>
+                    <p>We envision a world where everyone has access to quality environmental education, empowering individuals to make informed decisions about sustainability and climate action.</p>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('courses.index') }}" class="btn btn-success btn-lg">
+                            <i class="fas fa-rocket me-2"></i>Start Learning with eduNation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

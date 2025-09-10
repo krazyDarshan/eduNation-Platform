@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - eduNation{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <h1 class="display-5 text-success mb-4">
+                <i class="fas fa-user-circle me-3"></i>My Profile
+            </h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3>{{ current_user.first_name }} {{ current_user.last_name }}</h3>
+                    <p class="text-muted">@{{ current_user.username }} • {{ current_user.email }}</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h5>Learning Statistics</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Courses Completed</span>
+                                    <span class="badge bg-success">{{ user_stats.courses_completed }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Total Enrollments</span>
+                                    <span class="badge bg-primary">{{ user_stats.total_enrollments }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Achievements Earned</span>
+                                    <span class="badge bg-warning">{{ user_stats.achievements_earned }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Current Level</span>
+                                    <span class="badge bg-info">Level {{ user_stats.current_level }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Level Progress</h5>
+                            <div class="progress mb-3" style="height: 20px;">
+                                <div class="progress-bar bg-success" style="width: {{ user_stats.level_progress }}%">
+                                    {{ "%.0f"|format(user_stats.level_progress) }}%
+                                </div>
+                            </div>
+                            <p class="text-muted">Total Points: {{ current_user.total_points }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock me-2"></i>Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                    {% for activity in recent_activities %}
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-check-circle text-success me-3"></i>
+                        <div>
+                            <small class="text-muted">Completed lesson</small>
+                            <br>
+                            <small>{{ activity.completed_at.strftime('%B %d, %Y') if activity.completed_at else 'Recently' }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-muted text-center">No recent activity to show.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

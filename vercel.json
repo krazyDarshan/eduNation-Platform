@@ -1,0 +1,18 @@
+{
+  "services": {
+    "web": {
+      "root": ".",
+      "entrypoint": "run.py",
+      "buildCommand": "python build_vercel.py"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "web"
+      }
+    }
+  ]
+}

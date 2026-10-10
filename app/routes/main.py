@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from app import db
-from app.models.user import User, Enrollment
+from app.models.user import User, Enrollment, UserProgress
 from app.models.course import Course
 from app.models.gamification import LeaderboardView
 
@@ -63,7 +63,7 @@ def profile():
     }
     
     # Get recent activities - simplified for now
-    recent_activities = []
+    recent_activities = current_user.user_progress.filter_by(completed=True).order_by(UserProgress.completed_at.desc()).limit(5).all()
     
     return render_template('main/profile.html', 
                          user_stats=user_stats,

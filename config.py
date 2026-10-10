@@ -13,7 +13,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'edunation.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {'pool_pre_ping': True}
+    SQLALCHEMY_ENGINE_OPTIONS = {'pool_pre_ping': True, 'hide_parameters': True}
     SESSION_COOKIE_SECURE = os.environ.get('VERCEL') == '1'
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'

@@ -12,123 +12,36 @@ bp = Blueprint('api', __name__)
 @login_required
 def submit_quiz(quiz_id):
     """Submit quiz answers and calculate score"""
+    from app.learning import grade_quiz
     quiz = Quiz.query.get_or_404(quiz_id)
-    data = request.get_json()
-    answers = data.get('answers', {})
-    
-    # Check if user already attempted this quiz
-    existing_attempt = QuizAttempt.query.filter_by(
-        user_id=current_user.id,
-        quiz_id=quiz_id
-    ).first()
-    
-    if existing_attempt:
-        return jsonify({'success': False, 'message': 'Quiz already completed'})
-    
-    # Calculate score
-    questions = quiz.questions.all()
-    correct_answers = []
-    score = 0
-    
-    for question in questions:
-        question_id_str = str(question.id)
-        if question_id_str in answers:
-            selected_answer_id = int(answers[question_id_str])
-            correct_answer = question.answers.filter_by(is_correct=True).first()
-            
-            if correct_answer and selected_answer_id == correct_answer.id:
-                score += 1
-                correct_answers.append(correct_answer.id)
-            
-    total_questions = len(questions)
-    percentage = (score / total_questions) * 100 if total_questions > 0 else 0
-    
-    # Calculate points earned
-    points_earned = int((percentage / 100) * Config.POINTS_PER_QUIZ)
-    
-    # Save quiz attempt
-    attempt = QuizAttempt(
-        user_id=current_user.id,
-        quiz_id=quiz_id,
-        score=score,
-        points_earned=points_earned
-    )
-    db.session.add(attempt)
-    
-    # Add points to user
-    current_user.add_points(points_earned)
-    
-    # Check for new achievements
-    new_achievements = check_achievements(current_user)
-    
-    db.session.commit()
-    
-    return jsonify({
-        'success': True,
-        'score': score,
-        'total_questions': total_questions,
-        'percentage': percentage,
-        'points_earned': points_earned,
-        'correct_answers': correct_answers,
-        'new_achievements': [
-            {
-                'id': a.id,
-                'name': a.name,
-                'description': a.description,
-                'icon': a.icon
-            } for a in new_achievements
-        ]
-    })
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not isinstance(data.get('answers'), dict):
+        return jsonify(success=False, message='Provide a JSON answers object.'), 400
+    try:
+        result = grade_quiz(current_user, quiz, data['answers'])
+    except ValueError as error:
+        db.session.rollback()
+        return jsonify(success=False, message=str(error)), 400
+    return jsonify(success=True, **result)
+
 
 @bp.route('/lesson/<int:lesson_id>/progress', methods=['POST'])
 @login_required
 def update_lesson_progress(lesson_id):
-    """Update lesson progress"""
-    data = request.get_json()
-    completed = data.get('completed', True)
-    
-    # Get or create progress record
-    progress = UserProgress.query.filter_by(
-        user_id=current_user.id,
-        lesson_id=lesson_id
-    ).first()
-    
-    if not progress:
-        progress = UserProgress(user_id=current_user.id, lesson_id=lesson_id)
-        db.session.add(progress)
-    
-    # Update progress
-    if completed and not progress.completed:
-        progress.mark_completed()
-        current_user.add_points(Config.POINTS_PER_LESSON)
-        points_earned = Config.POINTS_PER_LESSON
-    else:
-        points_earned = 0
-    
-    # Get course progress
     from app.models.course import Lesson
-    lesson = Lesson.query.get(lesson_id)
-    course_progress = current_user.get_course_progress(lesson.course_id) if lesson else 0
-    
-    # Check for new achievements
-    new_achievements = check_achievements(current_user)
-    
-    db.session.commit()
-    
-    return jsonify({
-        'success': True,
-        'completed': progress.completed,
-        'points_earned': points_earned,
-        'progress_percentage': course_progress,
-        'new_achievements': [
-            {
-                'id': a.id,
-                'name': a.name,
-                'description': a.description,
-                'icon': a.icon
-            } for a in new_achievements
-        ]
-    })
+    from app.learning import finish_lesson
+    lesson = Lesson.query.get_or_404(lesson_id)
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or data.get('completed', True) is not True:
+        return jsonify(success=False, message='Provide completed: true.'), 400
+    try:
+        progress, points, percentage, achievements = finish_lesson(current_user, lesson)
+    except ValueError as error:
+        db.session.rollback()
+        return jsonify(success=False, message=str(error)), 403
+    return jsonify(success=True, completed=progress.completed, points_earned=points,
+                   progress_percentage=percentage,
+                   new_achievements=[dict(id=a.id, name=a.name, description=a.description, icon=a.icon) for a in achievements])
 
 @bp.route('/search')
 def search():
@@ -188,6 +101,8 @@ def check_achievements(user):
             elif 'Knowledge Seeker' in achievement.name and user.total_points >= 500:
                 should_award = True
             elif 'Eco Warrior' in achievement.name and user.total_points >= 1000:
+                should_award = True
+            elif 'Green Champion' in achievement.name and user.enrollments.filter_by(is_completed=True).count() >= 5:
                 should_award = True
             elif 'Environmental Expert' in achievement.name and user.total_points >= 2500:
                 should_award = True

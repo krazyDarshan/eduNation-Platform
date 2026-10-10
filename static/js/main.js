@@ -199,7 +199,7 @@ function updatePoints(pointsEarned) {
 }
 
 function getCsrfToken() {
-    return document.querySelector('meta[name=csrf-token]').getAttribute('content');
+    return document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
 }
 
 function showAlert(message, type = 'info') {

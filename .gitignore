@@ -39,3 +39,8 @@ migrations/versions/__pycache__/
 .DS_Store
 Thumbs.db
 
+.vercel
+.env*
+public/static/
+.agents/
+skills-lock.json

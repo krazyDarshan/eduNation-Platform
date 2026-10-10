@@ -10,7 +10,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(120), nullable=False)
+    password_hash = db.Column(db.Text, nullable=False)
     
     # Profile information
     first_name = db.Column(db.String(50), nullable=False)
@@ -104,13 +104,13 @@ class User(UserMixin, db.Model):
         if not course:
             return 0
         
-        total_lessons = len(course.lessons)
+        lessons = course.lessons.all()
+        total_lessons = len(lessons)
         if total_lessons == 0:
             return 0
         
-        completed_lessons = self.user_progress.filter_by(
-            lesson_id=db.any_([lesson.id for lesson in course.lessons]),
-            completed=True
+        completed_lessons = self.user_progress.filter_by(completed=True).filter(
+            UserProgress.lesson_id.in_([lesson.id for lesson in lessons])
         ).count()
         
         return (completed_lessons / total_lessons) * 100

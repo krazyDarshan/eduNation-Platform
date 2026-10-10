@@ -145,7 +145,8 @@ def lesson(course_id, lesson_id):
                          prev_lesson=prev_lesson,
                          next_lesson=next_lesson,
                          lesson_number=current_lesson_index + 1,
-                         total_lessons=len(all_lessons))
+                         total_lessons=len(all_lessons),
+                         course_progress=enrollment.get_progress_percentage())
 
 @bp.route('/<int:course_id>/quiz/<int:quiz_id>')
 @login_required
@@ -201,45 +202,18 @@ def submit_quiz(course_id, quiz_id):
         flash('You must be enrolled in this course to take quizzes', 'error')
         return redirect(url_for('courses.detail', course_id=course_id))
     
-    # Get questions and process answers
-    questions = quiz.questions.order_by('order').all()
-    total_questions = len(questions)
-    correct_answers = 0
-    
-    for question in questions:
-        submitted_answer_id = request.form.get(f'q{question.id}')
-        if submitted_answer_id:
-            # Find the correct answer
-            correct_answer = question.answers.filter_by(is_correct=True).first()
-            if correct_answer and str(correct_answer.id) == submitted_answer_id:
-                correct_answers += 1
-    
-    # Calculate score percentage
-    score_percentage = (correct_answers / total_questions * 100) if total_questions > 0 else 0
-    
-    # Award points based on performance
-    from config import Config
-    if score_percentage >= 80:
-        points_awarded = Config.POINTS_PER_QUIZ
-        current_user.total_points += points_awarded
-        flash(f'Excellent! You scored {score_percentage:.0f}% and earned {points_awarded} points!', 'success')
-    elif score_percentage >= 60:
-        points_awarded = Config.POINTS_PER_QUIZ // 2
-        current_user.total_points += points_awarded
-        flash(f'Good job! You scored {score_percentage:.0f}% and earned {points_awarded} points!', 'info')
-    else:
-        points_awarded = 0
-        flash(f'You scored {score_percentage:.0f}%. Try reviewing the material and take the quiz again!', 'warning')
-    
-    db.session.commit()
-    
-    return render_template('courses/quiz_results.html',
-                         course=course,
-                         quiz=quiz,
-                         score_percentage=score_percentage,
-                         correct_answers=correct_answers,
-                         total_questions=total_questions,
-                         points_awarded=points_awarded)
+    from app.learning import grade_quiz
+    try:
+        result = grade_quiz(current_user, quiz, {
+            str(q.id): request.form.get(f'q{q.id}') for q in quiz.questions
+        })
+    except ValueError as error:
+        db.session.rollback()
+        flash(str(error), 'warning')
+        return redirect(url_for('courses.quiz', course_id=course_id, quiz_id=quiz_id))
+    return render_template('courses/quiz_results.html', course=course, quiz=quiz,
+                           score_percentage=result['percentage'], correct_answers=result['score'],
+                           total_questions=result['total_questions'], points_awarded=result['points_earned'])
 
 @bp.route('/<int:course_id>/lessons/<int:lesson_id>/complete', methods=['POST'])
 @login_required
@@ -263,32 +237,10 @@ def complete_lesson(course_id, lesson_id):
         flash('You must be enrolled in this course to complete lessons', 'error')
         return redirect(url_for('courses.detail', course_id=course_id))
     
-    # Get or create progress record
-    progress = UserProgress.query.filter_by(
-        user_id=current_user.id,
-        lesson_id=lesson_id
-    ).first()
-    
-    if not progress:
-        progress = UserProgress(user_id=current_user.id, lesson_id=lesson_id)
-        db.session.add(progress)
-    
-    # Mark as completed
-    progress.completed = True
-    progress.completed_at = db.func.current_timestamp()
-    
-    # Award points for completion
-    if not progress.completed:
-        from config import Config
-        current_user.total_points += Config.POINTS_PER_LESSON
-        points_awarded = Config.POINTS_PER_LESSON
-    else:
-        points_awarded = 0
-    
-    db.session.commit()
-    
-    if points_awarded > 0:
-        flash('Lesson completed! You earned {} points.'.format(points_awarded), 'success')
+    from app.learning import finish_lesson
+    progress, points_awarded, percentage, achievements = finish_lesson(current_user, lesson)
+    if points_awarded:
+        flash(f'Lesson completed! You earned {points_awarded} points.', 'success')
     else:
         flash('Lesson already completed!', 'info')
     return redirect(url_for('courses.lesson', course_id=course_id, lesson_id=lesson_id))
